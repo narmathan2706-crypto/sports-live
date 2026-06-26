@@ -5,7 +5,7 @@ import {
   ChevronRight, ChevronLeft, Plus, Check, Activity, Clock, ArrowUpRight, 
   BarChart2, Share2, LogOut, AlertCircle, Shuffle, Smartphone, Mail, Lock, 
   Compass, Filter, CheckCircle2, Shield, Globe, Calendar, Zap, Play, Sparkles, 
-  RefreshCw, Award, MessageSquare, FlameKindling, Info, Download
+  RefreshCw, Award, MessageSquare, FlameKindling, Info, Download, Camera
 } from 'lucide-react';
 
 // ==========================================
@@ -272,6 +272,7 @@ interface MomentumPoint {
 
 function MatchMomentumSparkline({ match, depth }: { match: Match; depth: 'standard' | 'enhanced' | 'maximum' }) {
   const [pulse, setPulse] = useState(0);
+  const svgRef = useRef<SVGSVGElement | null>(null);
 
   // Set up live fluctuation for live matches
   useEffect(() => {
@@ -406,6 +407,133 @@ function MatchMomentumSparkline({ match, depth }: { match: Match; depth: 'standa
     document.body.removeChild(link);
   };
 
+  const downloadSnapshot = () => {
+    if (!svgRef.current) return;
+
+    // Dimensions of the high-res social media share card
+    const canvasWidth = 1200;
+    const canvasHeight = 630; // Perfect standard 1.91:1 aspect ratio for social sharing platforms
+    
+    const canvas = document.createElement('canvas');
+    canvas.width = canvasWidth;
+    canvas.height = canvasHeight;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    // 1. Draw solid dark background with subtle sleek dual-gradient
+    const gradient = ctx.createLinearGradient(0, 0, 0, canvasHeight);
+    gradient.addColorStop(0, '#090E1D');
+    gradient.addColorStop(1, '#03050B');
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+
+    // 2. Cyber grid pattern lines for a hyper-modern data dashboard vibe
+    ctx.strokeStyle = 'rgba(0, 229, 255, 0.02)';
+    ctx.lineWidth = 1;
+    const gridSpacing = 40;
+    for (let x = 0; x < canvasWidth; x += gridSpacing) {
+      ctx.beginPath();
+      ctx.moveTo(x, 0);
+      ctx.lineTo(x, canvasHeight);
+      ctx.stroke();
+    }
+    for (let y = 0; y < canvasHeight; y += gridSpacing) {
+      ctx.beginPath();
+      ctx.moveTo(0, y);
+      ctx.lineTo(canvasWidth, y);
+      ctx.stroke();
+    }
+
+    // Outer cyber border accent
+    ctx.strokeStyle = 'rgba(0, 229, 255, 0.15)';
+    ctx.lineWidth = 3;
+    ctx.strokeRect(10, 10, canvasWidth - 20, canvasHeight - 20);
+
+    // 3. Draw Brand and Metadata Header
+    ctx.fillStyle = '#00E5FF';
+    ctx.font = 'bold 15px sans-serif';
+    ctx.fillText('APEX MATCH MOMENTUM ENGINE', 50, 70);
+
+    ctx.fillStyle = '#94A3B8';
+    ctx.font = 'bold 12px monospace';
+    ctx.fillText('REAL-TIME ANALYTICAL TELEMETRY FEED', 50, 95);
+
+    // Live state status text
+    ctx.fillStyle = match.isLive ? '#10B981' : '#64748B';
+    ctx.fillRect(50, 115, 60, 22);
+    ctx.fillStyle = '#FFFFFF';
+    ctx.font = 'bold 11px sans-serif';
+    ctx.fillText(match.isLive ? '• LIVE' : 'FT MATCH', 60, 130);
+
+    // Category Badge
+    ctx.fillStyle = 'rgba(0, 229, 255, 0.1)';
+    const sportStr = match.sport.toUpperCase();
+    ctx.font = 'bold 11px sans-serif';
+    const sportStrWidth = ctx.measureText(sportStr).width;
+    ctx.fillRect(120, 115, sportStrWidth + 18, 22);
+    ctx.fillStyle = '#00E5FF';
+    ctx.fillText(sportStr, 129, 130);
+
+    // Match Teams matchup and scores in high emphasis
+    ctx.fillStyle = '#FFFFFF';
+    ctx.font = '800 36px sans-serif';
+    ctx.fillText(`${match.teamA.name.toUpperCase()}  ${match.teamA.score} - ${match.teamB.score}  ${match.teamB.name.toUpperCase()}`, 50, 190);
+
+    // 4. Current Dominance Summary Block (Top Right)
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+    ctx.font = '12px sans-serif';
+    ctx.fillText('DOMINANCE STATUS INDEX', canvasWidth - 450, 70);
+
+    ctx.fillStyle = currentDominance > 0 ? '#00E5FF' : '#FF4D6D';
+    ctx.font = 'bold 28px sans-serif';
+    const teamString = `${dominancePercent}% ${currentDominance > 0 ? match.teamA.name.toUpperCase() : match.teamB.name.toUpperCase()}`;
+    ctx.fillText(teamString, canvasWidth - 450, 105);
+
+    ctx.fillStyle = '#64748B';
+    ctx.font = '9px monospace';
+    ctx.fillText(`Ingested Data Volume: ${points.length * 184} datapoints`, canvasWidth - 450, 125);
+
+    // 5. Render SVG into canvas at high fidelity
+    const clonedSvg = svgRef.current.cloneNode(true) as SVGSVGElement;
+    clonedSvg.setAttribute('width', '1100');
+    clonedSvg.setAttribute('height', '320');
+
+    const svgString = new XMLSerializer().serializeToString(clonedSvg);
+    const svgBlob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
+    const url = URL.createObjectURL(svgBlob);
+
+    const img = new Image();
+    img.src = url;
+    img.onload = () => {
+      // Draw cloned SVG to canvas
+      ctx.drawImage(img, 50, 230, 1100, 320);
+
+      // Footers
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+      ctx.font = '11px monospace';
+      ctx.fillText('POWERED BY GEMINI AI MODEL CO-PROCESSING FEED', 50, 580);
+
+      const webOrigin = window.location.origin;
+      ctx.fillText(`URL: ${webOrigin}`, canvasWidth - 50 - ctx.measureText(`URL: ${webOrigin}`).width, 580);
+
+      // Trigger direct download
+      try {
+        const dataUrl = canvas.toDataURL('image/png');
+        const link = document.createElement('a');
+        link.setAttribute('href', dataUrl);
+        link.setAttribute('download', `momentum_snapshot_${match.id}_${match.sport.toLowerCase().replace(/\s+/g, '_')}.png`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      } catch (err) {
+        console.error('Failed to export canvas as PNG', err);
+      }
+
+      // Cleanup
+      URL.revokeObjectURL(url);
+    };
+  };
+
   return (
     <div className="bg-white/[0.02] border border-white/5 rounded-xl p-3.5 space-y-3 animate-fadeIn">
       <div className="flex justify-between items-center">
@@ -436,6 +564,16 @@ function MatchMomentumSparkline({ match, depth }: { match: Match; depth: 'standa
             <Download className="w-3.5 h-3.5" />
             <span>Export CSV</span>
           </button>
+          
+          <button
+            onClick={downloadSnapshot}
+            className="flex items-center gap-1.5 px-2.5 py-1 text-[10px] font-bold text-slate-300 bg-white/5 border border-white/10 hover:border-emerald-400/40 hover:text-emerald-400 hover:bg-emerald-400/10 rounded-lg transition-all cursor-pointer shadow-sm active:scale-95"
+            title="Download PNG Social Sharing Snapshot"
+          >
+            <Camera className="w-3.5 h-3.5" />
+            <span>Snapshot</span>
+          </button>
+
           <span className="text-[8px] bg-cyan-500/10 text-[#00E5FF] px-2 py-1 rounded-full font-bold uppercase tracking-widest font-mono">
             D3 RENDERED
           </span>
@@ -444,7 +582,7 @@ function MatchMomentumSparkline({ match, depth }: { match: Match; depth: 'standa
 
       {/* SVG Container */}
       <div className="relative w-full overflow-hidden rounded-lg bg-[#070b14]/50 border border-white/5 py-1">
-        <svg viewBox={`0 0 ${width} ${height}`} width="100%" height="100%" className="overflow-visible">
+        <svg ref={svgRef} viewBox={`0 0 ${width} ${height}`} width="100%" height="100%" className="overflow-visible">
           <defs>
             {/* Gradient for Team A dominance area (Above midline) */}
             <linearGradient id="gradient-above" x1="0" y1="0" x2="0" y2="1">
@@ -508,13 +646,16 @@ function MatchMomentumSparkline({ match, depth }: { match: Match; depth: 'standa
                   cx={xScale(p.time)}
                   cy={yScale(p.value)}
                   r="3.5"
-                  className={p.value > 0 ? 'fill-[#00E5FF]' : 'fill-[#FF4D6D]'}
+                  fill={p.value > 0 ? '#00E5FF' : '#FF4D6D'}
                 />
                 <circle
                   cx={xScale(p.time)}
                   cy={yScale(p.value)}
                   r="7"
-                  className={`fill-none stroke-2 animate-ping ${p.value > 0 ? 'stroke-[#00E5FF]/40' : 'stroke-[#FF4D6D]/40'}`}
+                  fill="none"
+                  stroke={p.value > 0 ? '#00E5FF' : '#FF4D6D'}
+                  strokeWidth="1"
+                  strokeOpacity="0.4"
                 />
               </g>
             );
@@ -525,13 +666,16 @@ function MatchMomentumSparkline({ match, depth }: { match: Match; depth: 'standa
             cx={xScale(lastPoint.time)}
             cy={yScale(lastPoint.value)}
             r="4.5"
-            className={lastPoint.value > 0 ? 'fill-[#00E5FF]' : 'fill-[#FF4D6D]'}
+            fill={lastPoint.value > 0 ? '#00E5FF' : '#FF4D6D'}
           />
           <circle
             cx={xScale(lastPoint.time)}
             cy={yScale(lastPoint.value)}
             r="9"
-            className={`fill-none stroke-2 ${lastPoint.value > 0 ? 'stroke-[#00E5FF]/40' : 'stroke-[#FF4D6D]/40'} animate-ping`}
+            fill="none"
+            stroke={lastPoint.value > 0 ? '#00E5FF' : '#FF4D6D'}
+            strokeWidth="1.5"
+            strokeOpacity="0.5"
           />
         </svg>
 
