@@ -1,0 +1,6 @@
+{
+  "name": "All Sports Live Scores",
+  "description": "Premium All Sports Live Scores dashboard featuring real-time telemetry, AI predictions, and matches overview for Cricket, Football, Basketball, Tennis, and more.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
